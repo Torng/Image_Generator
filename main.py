@@ -150,4 +150,5 @@ for epoch in range(num_epochs):
     if epoch % 10 == 0:
         path = Path("model_set/")
         path.mkdir(exist_ok=True)
+        output_path = path / "model_" + str(epoch)
         torch.save(netG, path)
