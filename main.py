@@ -1,4 +1,3 @@
-
 from Module.discriminator import Discriminator
 from Module.generator import Generator
 from torch.utils.data import DataLoader
@@ -8,6 +7,7 @@ import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
+from pathlib import Path
 
 # Batch size during training
 batch_size = 128
@@ -29,14 +29,13 @@ ngf = 64
 ndf = 64
 
 # Number of training epochs
-num_epochs = 5
+num_epochs = 50
 
 # Learning rate for optimizers
 lr = 0.0002
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
-
 
 dataset = dset.ImageFolder(root="celeb_data",
                            transform=transforms.Compose([
@@ -142,9 +141,13 @@ for epoch in range(num_epochs):
         D_losses.append(errD.item())
 
         # Check how the generator is doing by saving G's output on fixed_noise
-        if (iters % 500 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
+        if (iters % 500 == 0) or ((epoch == num_epochs - 1) and (i == len(dataloader) - 1)):
             with torch.no_grad():
                 fake = netG(fixed_noise).detach().cpu()
             img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
 
         iters += 1
+    if epoch % 10 == 0:
+        path = Path("model_set/")
+        path.mkdir(exist_ok=True)
+        torch.save(netG, path)
