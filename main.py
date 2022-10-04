@@ -86,7 +86,7 @@ def cal_gradient_penalty(D, real, fake):
     x_hat = sigma * real + (torch.tensor(1.) - sigma) * fake
     x_hat.requires_grad = True
     # 为得到梯度先计算y
-    d_x_hat = D(x_hat)
+    d_x_hat = D(x_hat).to(device)
 
     # 计算梯度,autograd.grad返回的是一个元组(梯度值，)
     gradients = torch.autograd.grad(outputs=d_x_hat, inputs=x_hat,
