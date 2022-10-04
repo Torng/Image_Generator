@@ -83,7 +83,7 @@ def cal_gradient_penalty(D, real, fake):
     sigma = torch.rand(real.size(0), 1)  # [64,1]
     sigma = sigma.expand(real.size())  # [64, 512]
     # 按公式计算x_hat
-    x_hat = sigma * real + (torch.tensor(1.) - sigma) * fake
+    x_hat = sigma * real + (torch.tensor(1., device=device) - sigma) * fake
     x_hat.requires_grad = True
     # 为得到梯度先计算y
     d_x_hat = D(x_hat)
@@ -95,6 +95,7 @@ def cal_gradient_penalty(D, real, fake):
     # 利用梯度计算出gradient penalty
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
     return gradient_penalty
+
 
 iterator = iter(dataloader)
 for epoch in range(num_epochs):
