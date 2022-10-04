@@ -95,7 +95,7 @@ for epoch in range(num_epochs):
         loss_D = lossr + lossf
         optimizerD.zero_grad()
         loss_D.backward()
-        torch.nn.utils.clip_grad_norm_(netG.parameters(), 0.1)
+        torch.nn.utils.clip_grad_norm_(netG.parameters(), 0.01)
         optimizerD.step()
     z = torch.randn(b_size, nz, 1, 1, device=device)
     xf = netG(z).detach()
@@ -108,7 +108,7 @@ for epoch in range(num_epochs):
     optimizerG.step()
 
     if epoch % 2 == 0:
-        print("epoch:{2} ==> lossD:{0},lossG:{1}".format(loss_D, loss_G, epoch))
+        print("epoch:{0} ==> lossDr:{1}, lossDf:{2},lossG:{3}".format(epoch, lossr, lossf, loss_G))
     if epoch % 10 == 0:
         path = Path("model_set/")
         path.mkdir(exist_ok=True)
