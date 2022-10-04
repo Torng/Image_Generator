@@ -75,7 +75,26 @@ D_losses = []
 iters = 0
 
 print("Starting Training Loop...")
+
+
 # For each epoch
+def cal_gradient_penalty(D, real, fake):
+    # 每一个样本对应一个sigma。样本个数为64，特征数为512：[64,512]
+    sigma = torch.rand(real.size(0), 1)  # [64,1]
+    sigma = sigma.expand(real.size())  # [64, 512]
+    # 按公式计算x_hat
+    x_hat = sigma * real + (torch.tensor(1.) - sigma) * fake
+    x_hat.requires_grad = True
+    # 为得到梯度先计算y
+    d_x_hat = D(x_hat)
+
+    # 计算梯度,autograd.grad返回的是一个元组(梯度值，)
+    gradients = torch.autograd.grad(outputs=d_x_hat, inputs=x_hat,
+                                    grad_outputs=torch.ones(d_x_hat.size()),
+                                    create_graph=True, retain_graph=True, only_inputs=True)[0]
+    # 利用梯度计算出gradient penalty
+    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
+    return gradient_penalty
 
 iterator = iter(dataloader)
 for epoch in range(num_epochs):
@@ -93,6 +112,8 @@ for epoch in range(num_epochs):
         # min predf
         lossf = predf.mean()
         loss_D = -(lossr - lossf)
+        gradient_penalty = cal_gradient_penalty(netD, real_cpu, xf)
+        loss_D = loss_D + gradient_penalty * 0.5
         optimizerD.zero_grad()
         loss_D.backward()
         # torch.nn.utils.clip_grad_norm_(netG.parameters(), 0.01)
