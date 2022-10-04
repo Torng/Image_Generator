@@ -32,7 +32,7 @@ ndf = 64
 num_epochs = 500
 
 # Learning rate for optimizers
-lr = 0.0002
+lr = 0.00001
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
@@ -98,7 +98,7 @@ for epoch in range(num_epochs):
         # torch.nn.utils.clip_grad_norm_(netG.parameters(), 0.01)
         optimizerD.step()
         for p in netD.parameters():
-            p.data.clamp_(0.01, -0.01)
+            p.data.clamp_(-0.01, 0.01)
     z = torch.randn(b_size, nz, 1, 1, device=device)
     xf = netG(z).detach()
     predf = netD(xf)
