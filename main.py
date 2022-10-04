@@ -80,10 +80,10 @@ print("Starting Training Loop...")
 # For each epoch
 def cal_gradient_penalty(D, real, fake):
     # 每一个样本对应一个sigma。样本个数为64，特征数为512：[64,512]
-    sigma = torch.rand(real.size(0), 1)  # [64,1]
-    sigma = sigma.expand(real.size()).to(device)  # [64, 512]
+    sigma = torch.rand(real.size(0), 1).to(device)  # [64,1]
+    sigma = sigma.expand(real.size())  # [64, 512]
     # 按公式计算x_hat
-    x_hat = sigma * real + (torch.tensor(1., device=device) - sigma) * fake
+    x_hat = sigma * real + (torch.tensor(1.) - sigma) * fake
     x_hat.requires_grad = True
     # 为得到梯度先计算y
     d_x_hat = D(x_hat)
