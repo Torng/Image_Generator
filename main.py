@@ -86,17 +86,19 @@ for epoch in range(num_epochs):
         b_size = real_cpu.size(0)
         predr = netD(real_cpu).view(-1)
         # maximize predr, therefore minus sign
-        lossr = -predr.mean()
+        lossr = predr.mean()
         z = torch.randn(b_size, nz, 1, 1, device=device)
         xf = netG(z).detach()  # gradient would be passed down
         predf = netD(xf)
         # min predf
         lossf = predf.mean()
-        loss_D = lossr + lossf
+        loss_D = -(lossr - lossf)
         optimizerD.zero_grad()
         loss_D.backward()
-        torch.nn.utils.clip_grad_norm_(netG.parameters(), 0.01)
+        # torch.nn.utils.clip_grad_norm_(netG.parameters(), 0.01)
         optimizerD.step()
+        for p in netD.parameters():
+            p.data.clamp_(0.01, -0.01)
     z = torch.randn(b_size, nz, 1, 1, device=device)
     xf = netG(z).detach()
     predf = netD(xf)
