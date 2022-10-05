@@ -32,7 +32,7 @@ ndf = 64
 num_epochs = 500
 
 # Learning rate for optimizers
-lr = 0.0001
+lr = 0.00005
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
@@ -113,7 +113,7 @@ for epoch in range(num_epochs):
         predf = netD(xf)
         # min predf
         lossf = predf.mean()
-        loss_D = -(lossr - lossf)
+        loss_D = -(lossr + lossf)
         gradient_penalty = cal_gradient_penalty(netD, real_cpu, xf)
         loss_D = loss_D + gradient_penalty * 0.5
         optimizerD.zero_grad()
