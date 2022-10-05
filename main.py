@@ -85,6 +85,7 @@ def cal_gradient_penalty(D, real, fake):
     # 按公式计算x_hat
     x_hat = sigma * real + (torch.tensor(1.) - sigma) * fake
     x_hat.requires_grad = True
+    x_hat.to(device)
     # 为得到梯度先计算y
     d_x_hat = D(x_hat).to(device)
 
