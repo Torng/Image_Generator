@@ -113,7 +113,7 @@ for epoch in range(num_epochs):
         predf = netD(xf)
         # min predf
         lossf = predf.mean()
-        loss_D = lossr - lossf  # max
+        loss_D = -(lossr - lossf)  # max
         gradient_penalty = cal_gradient_penalty(netD, real_cpu, xf)
         loss_D = loss_D + gradient_penalty * 0.5
         optimizerD.zero_grad()
@@ -122,14 +122,14 @@ for epoch in range(num_epochs):
     z = torch.randn(b_size, nz, 1, 1, device=device)
     xf = netG(z)
     predf = netD(xf)
-    loss_G = -predf.mean()  # min
+    loss_G = predf.mean()  # min
     # optimize
     optimizerG.zero_grad()
     loss_G.backward()
     optimizerG.step()
 
     if epoch % 2 == 0:
-        print("epoch:{0} ==> lossDr:{1}, lossDf:{2}, lossD:{3},lossG:{4}".format(epoch, lossr, lossf, loss_D, loss_G))
+        print("epoch:{0} ==> lossDr:{1}, lossDf:{2}, lossD:{3},lossG:{4}".format(epoch, lossr, lossf, -loss_D, loss_G))
     if epoch % 10 == 0:
         path = Path("model_set/")
         path.mkdir(exist_ok=True)
