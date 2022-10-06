@@ -123,8 +123,8 @@ for epoch in range(num_epochs):
         for p in netD.parameters():
             p.data.clamp_(-0.01, 0.01)
     z = torch.randn(b_size, nz, 1, 1, device=device)
-    xf = netG(z).detach()
-    predf = netD(xf)
+    xf = netG(z)
+    predf = netD(xf).detach()
     # maximize predf.mean()
     loss_G = -predf.mean()
     # optimize
