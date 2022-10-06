@@ -113,14 +113,14 @@ for epoch in range(num_epochs):
         predf = netD(xf)
         # min predf
         lossf = predf.mean()
-        loss_D = -(lossr - lossf)
+        loss_D = lossr - lossf
         gradient_penalty = cal_gradient_penalty(netD, real_cpu, xf)
         loss_D = loss_D + gradient_penalty * 0.5
         optimizerD.zero_grad()
         loss_D.backward()
         optimizerD.step()
-        for p in netD.parameters():
-            p.data.clamp_(-0.01, 0.01)
+        # for p in netD.parameters():
+        #     p.data.clamp_(-0.01, 0.01)
     z = torch.randn(b_size, nz, 1, 1, device=device)
     xf = netG(z)
     predf = netD(xf)
