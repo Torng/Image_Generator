@@ -113,7 +113,7 @@ for epoch in range(num_epochs):
         predf = netD(xf)
         # min predf
         lossf = predf.mean()
-        loss_D = lossf - lossr  # max
+        loss_D = -(lossf - lossr)  # max
         gradient_penalty = cal_gradient_penalty(netD, real_cpu, xf)
         loss_D = loss_D + gradient_penalty * 0.5
         optimizerD.zero_grad()
