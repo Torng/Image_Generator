@@ -1,3 +1,5 @@
+import torchvision
+
 from Module.discriminator import Discriminator
 from Module.generator import Generator
 from torch.utils.data import DataLoader
@@ -8,6 +10,7 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from pathlib import Path
+from torchvision.utils import save_image
 
 # Batch size during training
 batch_size = 128
@@ -42,9 +45,8 @@ dataset = dset.ImageFolder(root="celeb_data",
                                transforms.Resize((64, 64)),
                                transforms.CenterCrop((64, 64)),
                                transforms.ToTensor(),
-                               # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                               transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                            ]))
-# Create the dataloader
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=64,
                                          shuffle=True)
 
@@ -77,24 +79,27 @@ iters = 0
 print("Starting Training Loop...")
 
 
-# For each epoch
-def cal_gradient_penalty(D, real, fake):
-    # 每一个样本对应一个sigma。样本个数为64，特征数为512：[64,512]
-    sigma = torch.rand(real.size(0), 1, device=device)  # [64,1]
-    sigma = sigma.expand(real.size())  # [64, 512]
-    # 按公式计算x_hat
-    x_hat = sigma * real + (torch.tensor(1., device=device) - sigma) * fake
-    x_hat.requires_grad = True
-    # x_hat.to(device)
-    # 为得到梯度先计算y
-    d_x_hat = D(x_hat).to(device)
+def gradient_penalty(critic, real_image, fake_image, device="cpu"):
+    batch_size, channel, height, width = real_image.shape
+    # alpha is selected randomly between 0 and 1
+    alpha = torch.rand(batch_size, 1, 1, 1, device=device).repeat(1, channel, height, width)
+    # interpolated image=randomly weighted average between a real and fake image
+    # interpolated image ← alpha *real image  + (1 − alpha) fake image
+    interpolatted_image = (alpha * real_image) + (1 - alpha) * fake_image
 
-    # 计算梯度,autograd.grad返回的是一个元组(梯度值，)
-    gradients = torch.autograd.grad(outputs=d_x_hat, inputs=x_hat,
-                                    grad_outputs=torch.ones(d_x_hat.size(), device=device),
-                                    create_graph=True, retain_graph=True, only_inputs=True)[0]
-    # 利用梯度计算出gradient penalty
-    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
+    # calculate the critic score on the interpolated image
+    interpolated_score = critic(interpolatted_image)
+
+    # take the gradient of the score wrt to the interpolated image
+    gradient = torch.autograd.grad(inputs=interpolatted_image,
+                                   outputs=interpolated_score,
+                                   retain_graph=True,
+                                   create_graph=True,
+                                   grad_outputs=torch.ones_like(interpolated_score)
+                                   )[0]
+    gradient = gradient.view(gradient.shape[0], -1)
+    gradient_norm = gradient.norm(2, dim=1)
+    gradient_penalty = torch.mean((gradient_norm - 1) ** 2)
     return gradient_penalty
 
 
@@ -113,8 +118,8 @@ for epoch in range(num_epochs):
         predf = netD(xf)
         # min predf
         lossf = predf.mean()
-        loss_D = lossf-lossr  # max
-        gradient_penalty = cal_gradient_penalty(netD, real_cpu, xf)
+        loss_D = lossf - lossr  # max
+        gradient_penalty = gradient_penalty(netD, real_cpu, xf, device)
         loss_D = loss_D + gradient_penalty * 0.5
         optimizerD.zero_grad()
         loss_D.backward()
