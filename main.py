@@ -48,10 +48,10 @@ dataset = dset.ImageFolder(root="celeb_data",
                                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                            ]))
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=64,
-                                         shuffle=True)
+                                         shuffle=True, drop_last=True)
 
 # Decide which device we want to run on
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Initialize BCELoss function
 criterion = nn.BCELoss()
 
