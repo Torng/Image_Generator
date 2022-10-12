@@ -86,7 +86,7 @@ def gradient_penalty(critic, real_image, fake_image, device="cpu"):
     # interpolated image=randomly weighted average between a real and fake image
     # interpolated image ← alpha *real image  + (1 − alpha) fake image
     interpolatted_image = (alpha * real_image) + (1 - alpha) * fake_image
-
+    interpolatted_image = interpolatted_image.to(device)
     # calculate the critic score on the interpolated image
     interpolated_score = critic(interpolatted_image)
 
@@ -95,7 +95,7 @@ def gradient_penalty(critic, real_image, fake_image, device="cpu"):
                                    outputs=interpolated_score,
                                    retain_graph=True,
                                    create_graph=True,
-                                   grad_outputs=torch.ones_like(interpolated_score)
+                                   grad_outputs=torch.ones_like(interpolated_score, device=device)
                                    )[0]
     gradient = gradient.view(gradient.shape[0], -1)
     gradient_norm = gradient.norm(2, dim=1)
@@ -120,7 +120,7 @@ for epoch in range(num_epochs):
         lossf = predf.mean()
         loss_D = lossf - lossr  # max
         gradient_penalty = gradient_penalty(netD, real_cpu, xf, device)
-        loss_D = loss_D + gradient_penalty * 0.5
+        loss_D = loss_D + gradient_penalty * 10
         optimizerD.zero_grad()
         loss_D.backward()
         optimizerD.step()
