@@ -51,7 +51,7 @@ dataloader = torch.utils.data.DataLoader(dataset, batch_size=64,
                                          shuffle=True, drop_last=True)
 
 # Decide which device we want to run on
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Initialize BCELoss function
 criterion = nn.BCELoss()
 
@@ -79,8 +79,9 @@ iters = 0
 print("Starting Training Loop...")
 
 
-def gradient_penalty(critic, real_image, fake_image, device="cpu"):
+def gradient_penalty(critic, real_image, fake_image, device=None):
     batch_size, channel, height, width = real_image.shape
+    fake_image = fake_image.to(device)
     # alpha is selected randomly between 0 and 1
     alpha = torch.rand(batch_size, 1, 1, 1, device=device).repeat(1, channel, height, width)
     # interpolated image=randomly weighted average between a real and fake image
@@ -114,13 +115,13 @@ for epoch in range(num_epochs):
         # maximize predr, therefore minus sign
         lossr = predr.mean()
         z = torch.randn(b_size, nz, 1, 1, device=device)
-        xf = netG(z).detach()  # gradient would be passed down
+        xf = netG(z)  # gradient would be passed down
         predf = netD(xf)
         # min predf
         lossf = predf.mean()
         loss_D = lossf - lossr  # max
-        gradient_penalty = gradient_penalty(netD, real_cpu, xf, device)
-        loss_D = loss_D + gradient_penalty * 10
+        gp = gradient_penalty(netD, real_cpu, xf, device)
+        loss_D = loss_D + gp * 10
         optimizerD.zero_grad()
         loss_D.backward()
         optimizerD.step()
@@ -134,7 +135,7 @@ for epoch in range(num_epochs):
     optimizerG.step()
 
     if epoch % 2 == 0:
-        print("epoch:{0} ==> lossDr:{1}, lossDf:{2}, lossD:{3},lossG:{4}".format(epoch, lossr, lossf, -loss_D, loss_G))
+        print("epoch:{0} ==> lossDr:{1}, lossDf:{2}, lossD:{3},lossG:{4}".format(epoch, lossr, lossf, loss_D, -loss_G))
     if epoch % 10 == 0:
         path = Path("model_set/")
         path.mkdir(exist_ok=True)
